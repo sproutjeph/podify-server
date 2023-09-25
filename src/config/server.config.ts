@@ -3,6 +3,4 @@ dotenv.config();
 
 const { env } = process as { env: { [key: string]: string } };
 
-export const PORT = env.PORT || 8000;
-
-export const MONGODB_URI = env.MONGODB_URI;
+export const { PORT, MONGODB_URI, MAILTRAP_USER, MAILTRAP_PASS } = env;
