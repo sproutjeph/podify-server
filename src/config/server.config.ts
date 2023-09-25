@@ -1,3 +1,8 @@
-export const PORT = process.env.PORT || 8000;
+import dotenv from "dotenv";
+dotenv.config();
 
-export const MONGODB_URI = process.env.MONGODB_URI as string;
+const { env } = process as { env: { [key: string]: string } };
+
+export const PORT = env.PORT || 8000;
+
+export const MONGODB_URI = env.MONGODB_URI;
