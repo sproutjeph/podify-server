@@ -4,6 +4,7 @@ import User from "@/models/user";
 import { generateToken } from "@/utils/helper";
 import { sendVerificationMail } from "@/mail/mail";
 import EmailVerificationToken from "@/models/emailVerificationToken";
+import { isValidObjectId } from "mongoose";
 
 export const createUser: RequestHandler = async (req: ICreateUser, res) => {
   const { email, password, name } = req.body;
@@ -50,4 +51,36 @@ export const verifyEmail: RequestHandler = async (
   await EmailVerificationToken.findByIdAndDelete(verificationToken._id);
 
   res.json({ message: "Your email is verified." });
+};
+
+export const sendReVerificationToken: RequestHandler = async (req, res) => {
+  const { userId } = req.body;
+
+  if (!isValidObjectId(userId))
+    return res.status(403).json({ error: "Invalid request!" });
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(403).json({ error: "Invalid request!" });
+
+  if (user.verified)
+    return res.status(422).json({ error: "Your account is already verified!" });
+
+  await EmailVerificationToken.findOneAndDelete({
+    owner: userId,
+  });
+
+  const token = generateToken();
+
+  await EmailVerificationToken.create({
+    owner: userId,
+    token,
+  });
+
+  sendVerificationMail(token, {
+    name: user?.name,
+    email: user?.email,
+    userId: user?._id.toString(),
+  });
+
+  res.json({ message: "Please check you mail." });
 };
