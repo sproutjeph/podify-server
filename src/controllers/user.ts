@@ -1,9 +1,8 @@
-import { ICreateUser } from "@/@types/user";
+import { ICreateUser, IVerifyEmailRequest } from "@/@types/user";
 import { RequestHandler } from "express";
-import nodemailer from "nodemailer";
 import User from "@/models/user";
-import { MAILTRAP_PASS, MAILTRAP_USER } from "@/config/server.config";
 import { generateToken } from "@/utils/helper";
+import { sendVerificationMail } from "@/mail/mail";
 import EmailVerificationToken from "@/models/emailVerificationToken";
 
 export const createUser: RequestHandler = async (req: ICreateUser, res) => {
@@ -15,27 +14,40 @@ export const createUser: RequestHandler = async (req: ICreateUser, res) => {
     password,
   });
   const token = generateToken();
-  const verificationToken = await EmailVerificationToken.create({
+
+  await EmailVerificationToken.create({
     owner: user._id,
     token,
   });
-
-  // send verification email
-
-  const transport = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
-    port: 2525,
-    auth: {
-      user: MAILTRAP_USER,
-      pass: MAILTRAP_PASS,
-    },
+  sendVerificationMail(token, {
+    name,
+    email,
+    userId: user._id.toString(),
   });
 
-  transport.sendMail({
-    to: user.email,
-    from: "donjeph@gmail.com",
-    html: `<h1>Your Verification Token is ${token}</h1>`,
+  res.status(201).json({ user: { id: user._id, name, email } });
+};
+
+export const verifyEmail: RequestHandler = async (
+  req: IVerifyEmailRequest,
+  res
+) => {
+  const { userId, token } = req.body;
+
+  const verificationToken = await EmailVerificationToken.findOne({
+    owner: userId,
   });
 
-  res.status(201).json({ user });
+  if (!verificationToken)
+    return res.status(403).json({ error: "Invalid token!" });
+
+  const matched = await verificationToken.compareToken(token);
+  if (!matched) return res.status(403).json({ error: "Invalid token!" });
+
+  await User.findByIdAndUpdate(userId, {
+    verified: true,
+  });
+  await EmailVerificationToken.findByIdAndDelete(verificationToken._id);
+
+  res.json({ message: "Your email is verified." });
 };
