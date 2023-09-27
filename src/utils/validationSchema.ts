@@ -1,5 +1,6 @@
 import * as yup from "yup";
 import { isValidObjectId } from "mongoose";
+import { categories } from "./audio_category";
 
 export const CreateUserSchema = yup.object().shape({
   name: yup
@@ -58,4 +59,40 @@ export const UpdatePasswordSchema = yup.object().shape({
       /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#\$%\^&\*])[a-zA-Z\d!@#\$%\^&\*]+$/,
       "Password is too simple!"
     ),
+});
+
+export const AudioValidationSchema = yup.object().shape({
+  title: yup.string().required("Title is missing!"),
+  about: yup.string().required("About is missing!"),
+  category: yup
+    .string()
+    .oneOf(categories, "Invalid category!")
+    .required("Category is missing!"),
+});
+
+export const NewPlaylistValidationSchema = yup.object().shape({
+  title: yup.string().required("Title is missing!"),
+  resId: yup.string().transform(function (value) {
+    return this.isType(value) && isValidObjectId(value) ? value : "";
+  }),
+  visibility: yup
+    .string()
+    .oneOf(["public", "private"], "Visibility must be public or private!")
+    .required("Visibility is missing!"),
+});
+
+export const OldPlaylistValidationSchema = yup.object().shape({
+  title: yup.string().required("Title is missing!"),
+  // this is going to validate the audio id
+  item: yup.string().transform(function (value) {
+    return this.isType(value) && isValidObjectId(value) ? value : "";
+  }),
+  // this is going to validate the playlist id
+  id: yup.string().transform(function (value) {
+    return this.isType(value) && isValidObjectId(value) ? value : "";
+  }),
+  visibility: yup
+    .string()
+    .oneOf(["public", "private"], "Visibility must be public or private!"),
+  // .required("Visibility is missing!"),
 });
