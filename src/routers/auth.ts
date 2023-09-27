@@ -9,14 +9,17 @@ import {
   createUser,
   generateForgetPasswordLink,
   grantValid,
+  logOut,
   sendProfile,
   sendReVerificationToken,
   signIn,
   updatePassword,
+  updateProfile,
   verifyEmail,
 } from "@/controllers/user";
 import { Router } from "express";
 import { isValidPassResetToken, mustAuth } from "@/middleware/auth";
+import fileParser from "@/middleware/fileParser";
 
 const router = Router();
 
@@ -39,5 +42,8 @@ router.post(
 );
 router.post("/sign-in", validate(SignInValidationSchema), signIn);
 router.get("/is-auth", mustAuth, sendProfile);
+
+router.post("/update-profile", mustAuth, fileParser, updateProfile);
+router.post("/log-out", mustAuth, logOut);
 
 export default router;

@@ -12,4 +12,7 @@ export const {
   SIGN_IN_URL,
   PASSWORD_RESET_LINK,
   JWT_SECRET,
+  CLOUD_NAME,
+  CLOUD_API_KEY,
+  CLOUD_API_SECRET,
 } = env;
