@@ -20,6 +20,12 @@ import cloudinary from "@/cloud";
 export const createUser: RequestHandler = async (req: ICreateUser, res) => {
   const { email, password, name } = req.body;
 
+  const existingUser = await User.findOne({ email });
+
+  if (existingUser) {
+    return res.status(422).json({ error: "Email already exists!" });
+  }
+
   const user = await User.create({
     name,
     email,
